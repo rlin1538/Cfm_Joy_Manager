@@ -9,10 +9,6 @@ import android.util.Log
 
 import androidx.documentfile.provider.DocumentFile
 
-
-
-
-
 //获取指定目录的访问权限
 fun startFor(path: String, context: Activity, REQUEST_CODE_FOR_DIR: Int) {
     val uri: String = changeToUri(path) //调用方法，把path转换成可解析的uri文本，这个方法在下面会公布
@@ -53,6 +49,16 @@ fun getFiles(documentFile: DocumentFile) {
     if (documentFile.isDirectory) {
         for (file in documentFile.listFiles()) {
             Log.d("子文件", file.name!!)
+        }
+    }
+}
+
+fun getJoyFiles(documentFile: DocumentFile) {
+    if (documentFile.isDirectory) {
+        for (file in documentFile.listFiles()) {
+            if (file.isFile && file.name!!.startsWith("CustomJoySticksConfig") && file.name!!.endsWith(".json")) {
+                Log.d("键位文件", file.name!!)
+            }
         }
     }
 }

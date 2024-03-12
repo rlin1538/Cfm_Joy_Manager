@@ -847,3 +847,7 @@ val standardJoySticksJson = """
         }
     }
 """.trimIndent()
+
+val REQUEST_CODE_FOR_DIR = 10001
+val CFM_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/Assets4"
+val CFM_ALPHA_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cfalpha/files/Assets4"

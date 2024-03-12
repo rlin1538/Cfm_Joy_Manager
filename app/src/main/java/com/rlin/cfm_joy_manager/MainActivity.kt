@@ -1,26 +1,33 @@
 package com.rlin.cfm_joy_manager
 
-import android.R.attr
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -36,10 +43,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rlin.cfm_joy_manager.ui.theme.Cfm_Joy_ManagerTheme
-import com.rlin.cfm_joy_manager.utils.changeToUri
+import com.rlin.cfm_joy_manager.utils.CFM_DIR
+import com.rlin.cfm_joy_manager.utils.REQUEST_CODE_FOR_DIR
 import com.rlin.cfm_joy_manager.utils.changeToUri3
-import com.rlin.cfm_joy_manager.utils.getFiles
+import com.rlin.cfm_joy_manager.utils.getJoyFiles
+import com.rlin.cfm_joy_manager.utils.hasDirectionPermission
 import com.rlin.cfm_joy_manager.utils.startFor
+import com.rlin.cfm_joy_manager.widget.PermissionDialog
+import kotlin.properties.Delegates
 
 
 class MainActivity : ComponentActivity() {
@@ -50,19 +61,48 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            var showDialog by remember {
+                mutableStateOf(!hasDirectionPermission(contentResolver))
+            }
+            Log.d("MainActivity", "是否弹出权限申请弹窗：${showDialog}")
+
             Cfm_Joy_ManagerTheme {
-                Greeting()
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            if (hasDirectionPermission(contentResolver)) {
+                                showDialog = false
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    startFor(CFM_DIR, mActivity, REQUEST_CODE_FOR_DIR)
+                                    if (hasDirectionPermission(contentResolver)) {
+                                        showDialog = false
+                                    }
+                                }
+                            ) {
+                                Text("同意")
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = {
+                                    finish()
+                                }
+                            ) {
+                                Text("不同意")
+                            }
+                        },
+                        title = { Text("授权提示") },
+                        text = { Text("请同意授权才能使用应用") },
+                    )
+                } else {
+                    Greeting()
+                }
             }
         }
-
-//        //判断是否需要所有文件权限
-//        if (!(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager())) {
-//            println("/表明已经有这个权限了")
-//        } else {
-//            val intent =
-//                Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-//            startActivity(intent)
-//        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -71,11 +111,12 @@ class MainActivity : ComponentActivity() {
 
         val uri: Uri? = data?.data
 
-        if (requestCode == 10086) {
+        if (requestCode == REQUEST_CODE_FOR_DIR) {
             uri?.let {
                 contentResolver.takePersistableUriPermission(
                     it, (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
+                            or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                )
             } //关键是这里，这个就是保存这个目录的访问权限
         }
     }
@@ -106,7 +147,7 @@ class MainActivity : ComponentActivity() {
                             }
                             ElevatedButton(
                                 onClick = {
-                                    startFor("/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/Assets4", mActivity, 10086)
+                                    startFor(CFM_DIR, mActivity, REQUEST_CODE_FOR_DIR)
                                 }
                             ) {
                                 Text("获取权限")
@@ -115,10 +156,10 @@ class MainActivity : ComponentActivity() {
                                 onClick = {
                                     val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
                                         context, Uri.parse(
-                                            changeToUri3("/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/Assets4")
+                                            changeToUri3(CFM_DIR)
                                         )
                                     )
-                                    documentFile?.let { it1 -> getFiles(it1) }
+                                    documentFile?.let { it1 -> getJoyFiles(it1) }
                                 }
                             ) {
                                 Text("获取键位数据")
@@ -136,6 +177,9 @@ class MainActivity : ComponentActivity() {
                 )
             ) { it ->
                 JoySticksViewerPage(it)
+            }
+            composable(route = "page_joys") {
+
             }
         }
     }

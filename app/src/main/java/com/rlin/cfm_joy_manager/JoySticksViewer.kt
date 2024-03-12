@@ -1,6 +1,7 @@
 package com.rlin.cfm_joy_manager
 
 import ImgHelper.getBitmapFormResources
+import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,8 +32,18 @@ fun JoySticksViewer(
 
     joys = Gson().fromJson(json, typeMyType)
 
-    var standardJoys: HashMap<String, JoyButtonProperty> =
+    val standardJoys: HashMap<String, JoyButtonProperty> =
         Gson().fromJson(standardJoySticksJson, typeMyType)
+
+    fun getScaledJoyImg(btnName: String): Bitmap {
+        var img =
+            getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+        img = img.scale(
+            ((img.width / standardJoys[btnName]!!.Scale) * joys[btnName]!!.Scale).toInt(),
+            ((img.height / standardJoys[btnName]!!.Scale) * joys[btnName]!!.Scale).toInt()
+        )
+        return img
+    }
 
     Canvas(
         modifier = modifier
@@ -65,15 +76,9 @@ fun JoySticksViewer(
                     "StaticWalkBtn",
                     "MapButtonNew"
                 )
-
-            leftTop.forEachIndexed { index, btnName ->
+            leftTop.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    var img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
-                    img = img.scale(
-                        ((img.width / standardJoys[btnName]!!.Scale) * joys[btnName]!!.Scale).toInt(),
-                        ((img.height / standardJoys[btnName]!!.Scale) * joys[btnName]!!.Scale).toInt()
-                    )
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -95,19 +100,9 @@ fun JoySticksViewer(
                     "ChangeSniperZoomButton",
                     "LeftJumpButton",
                 )
-            val leftCenterRes = intArrayOf(
-                R.drawable.restoregrenadeidlestatebtn,
-                R.drawable.closesniperzoombutton,
-                R.drawable.changesniperfovview,
-                R.drawable.leftfirebutton,
-                R.drawable.changesniperzoombutton,
-                R.drawable.leftjumpbutton
-            )
-
-            leftCenter.forEachIndexed { index, btnName ->
+            leftCenter.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -127,17 +122,9 @@ fun JoySticksViewer(
                     "UserCrawlButton",
                     "C4Btn"
                 )
-            val leftDownRes = intArrayOf(
-                R.drawable.movementjoystick,
-                R.drawable.usercrouchbutton,
-                R.drawable.usercrawlbutton,
-                R.drawable.c4btn
-            )
-
-            leftDown.forEachIndexed { index, btnName ->
+            leftDown.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -149,7 +136,6 @@ fun JoySticksViewer(
                 }
             }
 
-
             // 居中
             val center =
                 arrayOf(
@@ -157,16 +143,9 @@ fun JoySticksViewer(
                     "BombC4Button",
                     "DroppedPickUpConfirmButton",
                 )
-            val centerRes = intArrayOf(
-                R.drawable.ingamevoicemicrophonebutton,
-                R.drawable.bombc4button,
-                R.drawable.droppedpickupconfirmbutton,
-            )
-
-            center.forEachIndexed { index, btnName ->
+            center.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -178,7 +157,6 @@ fun JoySticksViewer(
                 }
             }
 
-
             // 中底
             val centerDown =
                 arrayOf(
@@ -189,19 +167,9 @@ fun JoySticksViewer(
                     "SwitchBagButton",
                     "SmileButton"
                 )
-            val centerDownRes = intArrayOf(
-                R.drawable.playerinfohud,
-                R.drawable.lookatgunbutton,
-                R.drawable.reammobutton,
-                R.drawable.quickswitchweaponbutton,
-                R.drawable.switchbagbutton,
-                R.drawable.smilebutton,
-            )
-
-            centerDown.forEachIndexed { index, btnName ->
+            centerDown.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -219,15 +187,9 @@ fun JoySticksViewer(
                     "InGameVoiceTalkerButton",
                     "WeaponInfoButton",
                 )
-            val rightTopRes = intArrayOf(
-                R.drawable.ingamevoicetalkerbutton,
-                R.drawable.weaponinfobutton,
-            )
-
-            rightTop.forEachIndexed { index, btnName ->
+            rightTop.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -248,19 +210,10 @@ fun JoySticksViewer(
                     "WeaponQingTianBtn",
                     "SecondaryAttackButton",
                 )
-            val rightCenterRes = intArrayOf(
-                R.drawable.grenadebutton,
-                R.drawable.jumpbutton,
-                R.drawable.liudangunbutton,
-                R.drawable.weaponwangzhezhixinbtn,
-                R.drawable.weaponqingtianbtn,
-                R.drawable.secondaryattackbutton,
-            )
-
-            rightCenter.forEachIndexed { index, btnName ->
+            rightCenter.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    println(btnName)
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(
@@ -279,15 +232,9 @@ fun JoySticksViewer(
                     "FixedFireButton",
 //                    "FollowFireButton",
                 )
-            val rightDownRes = intArrayOf(
-                R.drawable.fixedfirebutton,
-//                R.drawable.followfirebutton,
-            )
-
-            rightDown.forEachIndexed { index, btnName ->
+            rightDown.forEach { btnName ->
                 if (joys[btnName] != null) {
-                    val img =
-                        getBitmapFormResources(context, getDrawableId(context, btnName.lowercase()))
+                    val img = getScaledJoyImg(btnName)
                     drawImage(
                         image = img.asImageBitmap(),
                         topLeft = Offset(

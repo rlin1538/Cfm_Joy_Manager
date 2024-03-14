@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
+    kotlin("plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -63,6 +64,15 @@ dependencies {
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.compose.material.material)
+    implementation(platform(libs.bom))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.github.jan-tennert.supabase:serializer-jackson-android:1.4.7")
+    implementation(libs.androidx.paging.common.ktx)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    runtimeOnly(libs.ktor.client.okhttp)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)

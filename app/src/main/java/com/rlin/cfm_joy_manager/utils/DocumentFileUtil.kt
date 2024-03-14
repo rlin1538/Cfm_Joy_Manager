@@ -1,13 +1,19 @@
 package com.rlin.cfm_joy_manager.utils
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.util.Log
-
 import androidx.documentfile.provider.DocumentFile
+import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+
 
 //获取指定目录的访问权限
 fun startFor(path: String, context: Activity, REQUEST_CODE_FOR_DIR: Int) {
@@ -53,12 +59,68 @@ fun getFiles(documentFile: DocumentFile) {
     }
 }
 
-fun getJoyFiles(documentFile: DocumentFile) {
-    if (documentFile.isDirectory) {
-        for (file in documentFile.listFiles()) {
-            if (file.isFile && file.name!!.startsWith("CustomJoySticksConfig") && file.name!!.endsWith(".json")) {
-                Log.d("键位文件", file.name!!)
+suspend fun getJoyFiles(context: Context): List<String> {
+    val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
+        context, Uri.parse(
+            changeToUri3(CFM_DIR)
+        )
+    )
+    val list = mutableListOf<String>()
+    if (documentFile != null) {
+        if (documentFile.isDirectory) {
+            for (file in documentFile.listFiles()) {
+                if (file.isFile && file.name!!.startsWith("CustomJoySticksConfig") && file.name!!.endsWith(
+                        ".json"
+                    )
+                ) {
+                    Log.d("键位文件", file.name!!)
+                    list.add(file.name!!)
+                }
             }
         }
     }
+    return list
+}
+
+fun readJoyFile(fileName: String, context: Context): String {
+    var fileContent = ""
+    val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
+        context, Uri.parse(
+            changeToUri3(CFM_DIR)
+        )
+    )
+    var joyFile: DocumentFile? = null
+    if (documentFile != null) {
+        if (documentFile.isDirectory) {
+            for (file in documentFile.listFiles()) {
+                if (file.isFile && file.name!!.endsWith(fileName)
+                ) {
+                    joyFile = file
+                    break
+                }
+            }
+        }
+    }
+    if (joyFile != null && joyFile.canRead()) {
+        fileContent = readDocumentFile(joyFile, context)
+    }
+    Log.d("文件IO", fileContent.length.toString())
+    return fileContent
+}
+
+fun readDocumentFile(documentFile: DocumentFile, context: Context): String {
+    val stringBuilder = StringBuilder()
+    try {
+        val inputStream: InputStream? = context.contentResolver.openInputStream(documentFile.uri)
+        val bufferedReader = BufferedReader(InputStreamReader(inputStream))
+        var line: String?
+        while (bufferedReader.readLine().also { line = it } != null) {
+            stringBuilder.append(line)
+        }
+        bufferedReader.close()
+        inputStream?.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+    return stringBuilder.toString()
 }

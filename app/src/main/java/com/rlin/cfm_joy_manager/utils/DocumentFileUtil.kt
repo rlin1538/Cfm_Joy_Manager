@@ -103,8 +103,8 @@ fun readJoyFile(fileName: String, context: Context): String {
     }
     if (joyFile != null && joyFile.canRead()) {
         fileContent = readDocumentFile(joyFile, context)
+        Log.d("文件IO","传入：${fileName}, 读取 ${joyFile.name}, 文件大小"+fileContent.length.toString())
     }
-    Log.d("文件IO", fileContent.length.toString())
     return fileContent
 }
 

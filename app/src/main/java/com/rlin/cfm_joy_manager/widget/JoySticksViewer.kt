@@ -1,4 +1,4 @@
-package com.rlin.cfm_joy_manager
+package com.rlin.cfm_joy_manager.widget
 
 import ImgHelper.getBitmapFormResources
 import android.graphics.Bitmap

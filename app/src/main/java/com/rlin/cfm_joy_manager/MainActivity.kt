@@ -10,27 +10,20 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -48,22 +41,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.rlin.cfm_joy_manager.entity.JoyDataResponse
 import com.rlin.cfm_joy_manager.entity.Screen
 import com.rlin.cfm_joy_manager.page.CloudPage
+import com.rlin.cfm_joy_manager.page.HomePage
 import com.rlin.cfm_joy_manager.page.NativePage
 import com.rlin.cfm_joy_manager.ui.theme.Cfm_Joy_ManagerTheme
-import com.rlin.cfm_joy_manager.utils.CFM_DIR
 import com.rlin.cfm_joy_manager.utils.REQUEST_CODE_FOR_DIR
-import com.rlin.cfm_joy_manager.utils.SupabaseHelper
 import com.rlin.cfm_joy_manager.utils.hasDirectionPermission
-import com.rlin.cfm_joy_manager.utils.startFor
-import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.rlin.cfm_joy_manager.widget.JoySticksViewer
 
 
 class MainActivity : ComponentActivity() {
@@ -134,7 +119,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @RequiresApi(Build.VERSION_CODES.R)
     @Composable
     fun MainPage(modifier: Modifier = Modifier) {
@@ -151,13 +135,6 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text("CFM键位工具   By Rlin_寒心")
-                            }
-                        )
-                    },
                     bottomBar = {
                         NavigationBar {
                             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -187,33 +164,7 @@ class MainActivity : ComponentActivity() {
                         Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.My.route) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Column(
-                                    modifier = Modifier.align(Alignment.Center)
-                                ) {
-                                    Box(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                                        ElevatedButton(
-                                            onClick = {
-                                                startFor(CFM_DIR, mActivity, REQUEST_CODE_FOR_DIR)
-                                            }
-                                        ) {
-                                            Text("获取权限")
-                                        }
-                                    }
-                                    ElevatedButton(
-                                        onClick = {
-                                            CoroutineScope(Dispatchers.IO).launch {
-                                                val res =
-                                                    SupabaseHelper.client.postgrest["joy"].select()
-                                                        .decodeList<JoyDataResponse>()
-                                                println("键位描述："+res[0].describe)
-                                            }
-                                        }
-                                    ) {
-                                        Text("测试请求")
-                                    }
-                                }
-                            }
+                            HomePage(mActivity)
                         }
                         composable(Screen.Native.route) {
                             NativePage(viewJoySticks = viewJoySticks)

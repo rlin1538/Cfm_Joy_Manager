@@ -3,5 +3,5 @@
     <string name="title_activity_joy_sticks_viewr">JoySticksViewr</string>
     <string name="page_native">本地键位</string>
     <string name="page_cloud">共享键位</string>
-    <string name="page_my">关于</string>
+    <string name="page_my">主页</string>
 </resources>

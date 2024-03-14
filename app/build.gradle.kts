@@ -69,6 +69,8 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")
     implementation("io.github.jan-tennert.supabase:serializer-jackson-android:1.4.7")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.blankj:utilcodex:1.31.1")
     implementation(libs.androidx.paging.common.ktx)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

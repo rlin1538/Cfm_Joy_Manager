@@ -1,10 +1,10 @@
 package com.rlin.cfm_joy_manager.data
 
 import android.util.Log
-import androidx.paging.LoadState.Loading.endOfPaginationReached
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.rlin.cfm_joy_manager.entity.JoyDataResponse
+import com.rlin.cfm_joy_manager.entity.JoyData
+import com.rlin.cfm_joy_manager.utils.DATABASE_TABLE_NAME
 import com.rlin.cfm_joy_manager.utils.SupabaseHelper
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -13,9 +13,9 @@ import kotlin.math.max
 
 private const val STARTING_KEY = 0
 
-class JoyDataPagingSource : PagingSource<Int, JoyDataResponse>() {
+class JoyDataPagingSource : PagingSource<Int, JoyData>() {
     private var isResponseEmpty = false
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, JoyDataResponse> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, JoyData> {
         // Start paging with the STARTING_KEY if this is the first load
         val start = params.key ?: STARTING_KEY
         // Load as many items as hinted by params.loadSize
@@ -24,11 +24,11 @@ class JoyDataPagingSource : PagingSource<Int, JoyDataResponse>() {
 
         return try {
             val res =
-                SupabaseHelper.client.postgrest["joy"].select {
+                SupabaseHelper.client.postgrest[DATABASE_TABLE_NAME].select {
                     order(column = "created_at", order = Order.DESCENDING)
                     range(range.first.toLong()..range.last.toLong())
                 }
-                    .decodeList<JoyDataResponse>()
+                    .decodeList<JoyData>()
             Log.d("Paging请求", "请求${start}-${range.last}, 返回了了${res.size}个数据")
             if (res.isEmpty()) {
                 return LoadResult.Error(throwable = Exception("end"))
@@ -57,7 +57,7 @@ class JoyDataPagingSource : PagingSource<Int, JoyDataResponse>() {
     }
 
     // The refresh key is used for the initial load of the next PagingSource, after invalidation
-    override fun getRefreshKey(state: PagingState<Int, JoyDataResponse>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, JoyData>): Int? {
         // In our case we grab the item closest to the anchor position
         // then return its id - (state.config.pageSize / 2) as a buffer
         val anchorPosition = state.anchorPosition ?: return null

@@ -1,6 +1,6 @@
 package com.rlin.cfm_joy_manager.page
 
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,10 +32,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.blankj.utilcode.util.ToastUtils
+import com.rlin.cfm_joy_manager.entity.RESPONSE_FAILED
+import com.rlin.cfm_joy_manager.entity.RESPONSE_SUCCESS
+import com.rlin.cfm_joy_manager.utils.changeDocumentFile
+import com.rlin.cfm_joy_manager.utils.fromCodeGetJoy
 import com.rlin.cfm_joy_manager.utils.getJoyFiles
 import com.rlin.cfm_joy_manager.utils.goViewJoySticks
 import com.rlin.cfm_joy_manager.utils.readJoyFile
 import com.rlin.cfm_joy_manager.utils.uploadJoy
+import com.rlin.cfm_joy_manager.widget.ChangeJoyDialog
+import com.rlin.cfm_joy_manager.widget.SuccessChangeDialog
 import com.rlin.cfm_joy_manager.widget.SuccessUploadDialog
 import com.rlin.cfm_joy_manager.widget.UploadDialog
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +75,13 @@ fun NativePage(
         val openUploadDialog = remember {
             mutableStateOf(false)
         }
-        val openUploadingDialog = remember {
+        val openSuccessUploadDialog = remember {
+            mutableStateOf(false)
+        }
+        val openChangeJoyDialog = remember {
+            mutableStateOf(false)
+        }
+        val openSuccessChangeDialog = remember {
             mutableStateOf(false)
         }
 
@@ -115,7 +127,6 @@ fun NativePage(
                         Column(
                             modifier = Modifier.padding(12.dp)
                         ) {
-
                             val result = it.split("_")
                             var userId = "无"
                             var joyNum = 1
@@ -142,7 +153,8 @@ fun NativePage(
                                 OutlinedButton(
                                     modifier = Modifier.padding(horizontal = 8.dp),
                                     onClick = {
-                                        Toast.makeText(context, "施工中", Toast.LENGTH_SHORT).show()
+                                        selectedJoy.value = it
+                                        openChangeJoyDialog.value = true
                                     }) {
                                     Text(text = "修改")
                                 }
@@ -184,7 +196,7 @@ fun NativePage(
                             else -> {
                                 openUploadDialog.value = false
                                 ToastUtils.showShort("上传成功")
-                                openUploadingDialog.value = true
+                                openSuccessUploadDialog.value = true
                             }
                         }
                         afterUpload()
@@ -193,18 +205,63 @@ fun NativePage(
                 onDismissRequest = { openUploadDialog.value = false }
             )
         }
-        if (openUploadingDialog.value) {
+        if (openSuccessUploadDialog.value) {
             SuccessUploadDialog(
                 onDismissRequest = {
-                    openUploadingDialog.value = false
+                    openSuccessUploadDialog.value = false
                 },
                 onConfirmation = {
-                   clipboardManager.setText(AnnotatedString(joyCode.value))
+                    clipboardManager.setText(AnnotatedString(joyCode.value))
                     ToastUtils.showShort("复制成功")
                 },
                 dialogTitle = joyCode.value
             )
         }
 
+        if (openChangeJoyDialog.value) {
+            ChangeJoyDialog(
+                onDismissRequest = {
+                    openChangeJoyDialog.value = false
+                },
+                onConfirmation = { code, afterConfirmation ->
+                    scope.launch {
+                        val getJoyResponse = fromCodeGetJoy(code)
+
+                        if (getJoyResponse.status == RESPONSE_SUCCESS) {
+                            Log.d("NativePage", getJoyResponse.content)
+                            val result = changeDocumentFile(
+                                selectedJoy.value,
+                                getJoyResponse.content,
+                                context
+                            )
+                            when (result) {
+                                -1 -> {
+                                    Log.d("NativePage", "替换失败")
+                                    ToastUtils.showShort("替换失败")
+                                }
+                                1 -> {
+                                    openChangeJoyDialog.value = false
+                                    Log.d("NativePage", "替换成功")
+                                    openSuccessChangeDialog.value = true
+                                }
+                            }
+                        } else if (getJoyResponse.status == RESPONSE_FAILED) {
+                            Log.d("NativePage", getJoyResponse.content)
+                            ToastUtils.showShort("键位码错误或网络异常")
+                        }
+                        afterConfirmation()
+                    }
+                },
+            )
+        }
+
+        if (openSuccessChangeDialog.value) {
+            SuccessChangeDialog(
+                onDismissRequest = {
+                    openSuccessChangeDialog.value = false
+                },
+                dialogTitle = joyCode.value
+            )
+        }
     }
 }

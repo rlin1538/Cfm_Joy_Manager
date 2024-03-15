@@ -52,7 +52,7 @@ fun JoySticksViewer(
         onDraw = {
             val scaleXFactor: Float = size.width / 1200
             val scaleYFactor: Float = size.height / 640
-            val alphaFactor = 0.7f
+            val alphaFactor = 0.95f
             val edgeOffset = 30F
 
             drawLine(

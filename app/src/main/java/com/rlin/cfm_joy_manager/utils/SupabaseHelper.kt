@@ -19,6 +19,6 @@ object SupabaseHelper {
         })
         // 安装Database插件
         install(Postgrest)
-        requestTimeout = Duration.parse("30s")
+        requestTimeout = Duration.parse("15s")
     }
 }

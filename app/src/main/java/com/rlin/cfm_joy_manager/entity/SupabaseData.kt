@@ -11,3 +11,10 @@ data class JoyData(
     val content: String
 )
 
+const val RESPONSE_SUCCESS = 1
+const val RESPONSE_FAILED = -1
+
+data class JoyCodeResponse(
+    val status: Int,
+    val content: String
+)

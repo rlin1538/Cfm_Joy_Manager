@@ -104,7 +104,7 @@ fun CloudPage(
                             ElevatedCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(4.dp)
+                                    .padding(8.dp)
                             )
                             {
                                 Column(
@@ -121,7 +121,7 @@ fun CloudPage(
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
-                                    Divider()
+                                    Divider(thickness = 0.dp)
                                     Row(
                                         modifier = Modifier.align(Alignment.End)
                                     ) {

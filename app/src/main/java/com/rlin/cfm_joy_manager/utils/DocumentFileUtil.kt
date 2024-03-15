@@ -6,13 +6,17 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
+import android.text.TextUtils
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.BufferedWriter
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.io.OutputStream
+import java.io.OutputStreamWriter
 
 
 //获取指定目录的访问权限
@@ -69,9 +73,16 @@ suspend fun getJoyFiles(context: Context): List<String> {
     if (documentFile != null) {
         if (documentFile.isDirectory) {
             for (file in documentFile.listFiles()) {
-                if (file.isFile && file.name!!.startsWith("CustomJoySticksConfig") && file.name!!.endsWith(
+                if (file.isFile && file.name!!.startsWith("CustomJoySticksConfig_")
+                    && file.name!!.endsWith(
                         ".json"
-                    )
+                    ) && (!TextUtils.equals(
+                        file.name,
+                        "CustomJoySticksConfig_1.json"
+                    ) && !TextUtils.equals(
+                        file.name,
+                        "CustomJoySticksConfig_2.json"
+                    ) && !TextUtils.equals(file.name, "CustomJoySticksConfig_3.json"))
                 ) {
                     Log.d("键位文件", file.name!!)
                     list.add(file.name!!)
@@ -103,7 +114,10 @@ fun readJoyFile(fileName: String, context: Context): String {
     }
     if (joyFile != null && joyFile.canRead()) {
         fileContent = readDocumentFile(joyFile, context)
-        Log.d("文件IO","传入：${fileName}, 读取 ${joyFile.name}, 文件大小"+fileContent.length.toString())
+        Log.d(
+            "文件IO",
+            "传入：${fileName}, 读取 ${joyFile.name}, 文件大小" + fileContent.length.toString()
+        )
     }
     return fileContent
 }
@@ -123,4 +137,67 @@ fun readDocumentFile(documentFile: DocumentFile, context: Context): String {
         e.printStackTrace()
     }
     return stringBuilder.toString()
+}
+
+fun writeDocumentFile(documentFile: DocumentFile, content: String, context: Context): Int {
+    try {
+        val outputStream: OutputStream? = context.contentResolver.openOutputStream(documentFile.uri)
+        val bufferedWriter = BufferedWriter(OutputStreamWriter(outputStream))
+
+        bufferedWriter.write("")
+        bufferedWriter.flush()
+        bufferedWriter.write(content)
+        Log.d(
+            "文件IO",
+            "文件写入${content.length}个字符"
+        )
+        bufferedWriter.flush()
+
+        outputStream?.close()
+    } catch (e: IOException) {
+        e.printStackTrace()
+        return -1
+    }
+    return 1
+}
+
+fun changeDocumentFile(fileName: String, content: String, context: Context): Int {
+    val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
+        context, Uri.parse(
+            changeToUri3(CFM_DIR)
+        )
+    )
+    var joyFile: DocumentFile? = null
+    if (documentFile != null) {
+        if (documentFile.isDirectory) {
+            for (file in documentFile.listFiles()) {
+                if (file.isFile && file.name!!.endsWith(fileName)
+                ) {
+                    joyFile = file
+                    break
+                }
+            }
+        }
+    }
+    if (joyFile != null && joyFile.canWrite()) {
+        Log.d(
+            "文件IO",
+            "传入文件名：${fileName}，修改文件：${joyFile.name}，准备写入${content.length}个字符"
+        )
+        val result = writeDocumentFile(joyFile, content, context)
+        Log.d(
+            "文件IO",
+            "成功1，失败-1：$result"
+        )
+        when (result) {
+            1 -> {
+                return 1
+            }
+
+            -1 -> {
+                return -1
+            }
+        }
+    }
+    return -1
 }

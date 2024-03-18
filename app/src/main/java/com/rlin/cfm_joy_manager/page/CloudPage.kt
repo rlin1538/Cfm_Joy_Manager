@@ -1,5 +1,6 @@
 package com.rlin.cfm_joy_manager.page
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import com.rlin.cfm_joy_manager.data.JoyDataViewModel
 import com.rlin.cfm_joy_manager.utils.goViewJoySticks
 import java.io.IOException
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CloudPage(

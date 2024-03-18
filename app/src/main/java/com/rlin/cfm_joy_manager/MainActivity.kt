@@ -7,11 +7,15 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -22,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +38,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.view.WindowCompat
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -46,6 +53,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.blankj.utilcode.util.AppUtils
 import com.blankj.utilcode.util.ToastUtils
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.rlin.cfm_joy_manager.entity.Screen
 import com.rlin.cfm_joy_manager.page.CloudPage
 import com.rlin.cfm_joy_manager.page.HomePage
@@ -71,6 +79,7 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         Shizuku.addBinderReceivedListenerSticky { GlobalStatus.shizukuStatus = true }
         Shizuku.addBinderDeadListener { GlobalStatus.shizukuStatus = false }
         setContent {
@@ -80,6 +89,7 @@ class MainActivity : ComponentActivity() {
             Log.d("MainActivity", "是否弹出权限申请弹窗：${showDialog}")
 
             Cfm_Joy_ManagerTheme {
+                TransparentSystemBars()
                 MainPage()
             }
         }
@@ -152,7 +162,11 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = Screen.My.route,
-                        Modifier.padding(innerPadding)
+                        Modifier.padding(
+                            start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                            end = innerPadding.calculateEndPadding(LayoutDirection.Rtl),
+                            bottom = innerPadding.calculateBottomPadding()
+                        )
                     ) {
                         composable(Screen.My.route) {
                             HomePage(mActivity) { requestPermission() }
@@ -186,18 +200,47 @@ class MainActivity : ComponentActivity() {
         mNavController.navigate("Page_viewer/$json")
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     @Composable
     fun JoySticksViewerPage(it: NavBackStackEntry) {
         val configuration = LocalConfiguration.current
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
         DisposableEffect(configuration, context, lifecycleOwner) {
-            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            window.attributes.apply {
+                // Window级别的全屏（这里的代码可以）
+                systemUiVisibility =
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+
+                // 设置视图内容是否显示到异形切口区域
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+//            window.decorView.apply {
+//                // 视图级全屏
+//                systemUiVisibility =
+//                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+//                            // 视图内容延伸到状态栏区域
+//                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//            }
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
             onDispose {
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                window.attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+//                window.decorView.apply {
+//                    systemUiVisibility = View.SYSTEM_UI_FLAG_IMMERSIVE or
+//                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                }
+
             }
         }
         val json = it.arguments?.getString("json")
@@ -249,29 +292,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //    private fun doSzkWork() {
-//        Log.d("MainActivity", "doSzkWork")
-//        val serviceArgs = Shizuku.UserServiceArgs(ComponentName(this, MyJoy::class.java))
-//            .processNameSuffix("operation")
-//            .daemon(false)
-//
-//
-//        val connection: ServiceConnection = object : ServiceConnection {
-//            override fun onServiceConnected(name: ComponentName, service: IBinder) {
-//                try {
-//                    IMyJoy.Stub.asInterface(service).test()
-//                } catch (e: RemoteException) {
-//                    Log.e("MainActivity", "onServiceConnected: ", e)
-//                }
-//                Shizuku.unbindUserService(serviceArgs, this, true)
-////                finish()
-////                executed.set(true)
-//            }
-//
-//            override fun onServiceDisconnected(name: ComponentName) {}
-//        }
-//        Shizuku.bindUserService(serviceArgs, connection)
-//    }
     fun launchShizukuManager() {
         packageManager.getLaunchIntentForPackage(MANAGER_APPLICATION_ID)?.let {
             startActivity(it)
@@ -280,3 +300,15 @@ class MainActivity : ComponentActivity() {
 
 }
 
+@Composable
+fun TransparentSystemBars() {
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isSystemInDarkTheme()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color.Transparent,
+            darkIcons = useDarkIcons,
+            isNavigationBarContrastEnforced = false,
+        )
+    }
+}

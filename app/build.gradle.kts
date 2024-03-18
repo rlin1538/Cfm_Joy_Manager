@@ -78,6 +78,7 @@ dependencies {
     implementation("dev.rikka.shizuku:api:13.1.1")
     implementation("dev.rikka.shizuku:provider:13.1.1")
     implementation("dev.rikka.tools.refine:runtime:3.0.3")
+    implementation(libs.accompanist.systemuicontroller)
     implementation(libs.androidx.paging.common.ktx)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

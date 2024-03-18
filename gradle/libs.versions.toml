@@ -1,4 +1,5 @@
 [versions]
+accompanist-systemuicontroller = "0.31.0-alpha"
 agp = "8.3.0"
 androidx-compose-material-material = "1.6.3"
 bom = "1.4.7"
@@ -23,6 +24,7 @@ paging-common-ktx = "3.2.1"
 paging-compose = "3.2.1"
 
 [libraries]
+accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist-systemuicontroller" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity-compose" }
 androidx-compose-material-material = { module = "androidx.compose.material:material", version.ref = "androidx-compose-material-material" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }

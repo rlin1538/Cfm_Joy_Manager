@@ -2,6 +2,7 @@ package com.rlin.cfm_joy_manager
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -24,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -41,23 +44,35 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.blankj.utilcode.util.AppUtils
+import com.blankj.utilcode.util.ToastUtils
 import com.rlin.cfm_joy_manager.entity.Screen
 import com.rlin.cfm_joy_manager.page.CloudPage
 import com.rlin.cfm_joy_manager.page.HomePage
 import com.rlin.cfm_joy_manager.page.NativePage
 import com.rlin.cfm_joy_manager.ui.theme.Cfm_Joy_ManagerTheme
+import com.rlin.cfm_joy_manager.utils.GlobalStatus
 import com.rlin.cfm_joy_manager.utils.REQUEST_CODE_FOR_DIR
 import com.rlin.cfm_joy_manager.utils.hasDirectionPermission
 import com.rlin.cfm_joy_manager.widget.JoySticksViewer
+import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuProvider.MANAGER_APPLICATION_ID
 
 
 class MainActivity : ComponentActivity() {
     private lateinit var mNavController: NavHostController
     private val mActivity = this
 
+    companion object {
+        const val SHIZUKU_PERMISSION_REQUEST_CODE = 13
+    }
+
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Shizuku.addBinderReceivedListenerSticky { GlobalStatus.shizukuStatus = true }
+        Shizuku.addBinderDeadListener { GlobalStatus.shizukuStatus = false }
         setContent {
             var showDialog by remember {
                 mutableStateOf(!hasDirectionPermission(contentResolver))
@@ -66,39 +81,6 @@ class MainActivity : ComponentActivity() {
 
             Cfm_Joy_ManagerTheme {
                 MainPage()
-                /*if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            if (hasDirectionPermission(contentResolver)) {
-                                showDialog = false
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    startFor(CFM_DIR, mActivity, REQUEST_CODE_FOR_DIR)
-                                    if (hasDirectionPermission(contentResolver)) {
-                                        showDialog = false
-                                    }
-                                }
-                            ) {
-                                Text("同意")
-                            }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = {
-                                    finish()
-                                }
-                            ) {
-                                Text("不同意")
-                            }
-                        },
-                        title = { Text("授权提示") },
-                        text = { Text("请同意授权才能使用应用") },
-                    )
-                } else {
-                }*/
             }
         }
     }
@@ -118,6 +100,15 @@ class MainActivity : ComponentActivity() {
             } //关键是这里，这个就是保存这个目录的访问权限
         }
     }
+//
+//    override fun onRequestPermissionResult(requestCode: Int, grantResult: Int) {
+//        if (grantResult != PackageManager.PERMISSION_GRANTED) {
+//            Log.d("MainActivity", "OnRequestPermissionResult")
+//            finish();
+//            return;
+//        }
+//        doSzkWork()
+//    }
 
     @RequiresApi(Build.VERSION_CODES.R)
     @Composable
@@ -164,7 +155,7 @@ class MainActivity : ComponentActivity() {
                         Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.My.route) {
-                            HomePage(mActivity)
+                            HomePage(mActivity) { requestPermission() }
                         }
                         composable(Screen.Native.route) {
                             NativePage(viewJoySticks = viewJoySticks)
@@ -215,7 +206,77 @@ class MainActivity : ComponentActivity() {
             color = Color.Gray
         ) {
             json?.let { it1 -> JoySticksViewer(it1) }
+            Box {
+                Text(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    text = "键位查看仅供参考",
+                    color = Color.Gray.copy(alpha = 0.7F)
+                )
+            }
         }
     }
+
+    fun requestPermission() {
+        if (AppUtils.isAppInstalled(MANAGER_APPLICATION_ID)) {
+            if (GlobalStatus.shizukuStatus) {
+                if (Shizuku.shouldShowRequestPermissionRationale()) {
+                    Log.d(
+                        "Shizuku",
+                        "您已选择「拒绝且不再询问」该应用的权限申请，请手动打开授权管理器进行授权。"
+                    )
+                    ToastUtils.showShort("您已选择「拒绝且不再询问」该应用的权限申请，请手动打开授权管理器进行授权。")
+                } else {
+                    if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_DENIED) {
+                        Shizuku.addRequestPermissionResultListener { requestCode, grantResult ->
+                            val isGranted =
+                                requestCode == SHIZUKU_PERMISSION_REQUEST_CODE && grantResult == PackageManager.PERMISSION_GRANTED
+
+                            Log.d("Shizuku", "isGranted: $isGranted")
+                            ToastUtils.showShort("授权结果为$isGranted")
+
+                        }
+                        Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
+                    } else {
+                        Log.d("Shizuku", "isGranted: 已授权过")
+                        ToastUtils.showShort("已授权过")
+                    }
+                }
+            } else {
+                launchShizukuManager()
+            }
+        } else {
+            ToastUtils.showShort("你还没有安装Shizuku")
+        }
+    }
+
+    //    private fun doSzkWork() {
+//        Log.d("MainActivity", "doSzkWork")
+//        val serviceArgs = Shizuku.UserServiceArgs(ComponentName(this, MyJoy::class.java))
+//            .processNameSuffix("operation")
+//            .daemon(false)
+//
+//
+//        val connection: ServiceConnection = object : ServiceConnection {
+//            override fun onServiceConnected(name: ComponentName, service: IBinder) {
+//                try {
+//                    IMyJoy.Stub.asInterface(service).test()
+//                } catch (e: RemoteException) {
+//                    Log.e("MainActivity", "onServiceConnected: ", e)
+//                }
+//                Shizuku.unbindUserService(serviceArgs, this, true)
+////                finish()
+////                executed.set(true)
+//            }
+//
+//            override fun onServiceDisconnected(name: ComponentName) {}
+//        }
+//        Shizuku.bindUserService(serviceArgs, connection)
+//    }
+    fun launchShizukuManager() {
+        packageManager.getLaunchIntentForPackage(MANAGER_APPLICATION_ID)?.let {
+            startActivity(it)
+        }
+    }
+
 }
 

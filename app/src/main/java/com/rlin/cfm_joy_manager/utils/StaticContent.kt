@@ -853,3 +853,7 @@ const val CFM_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/
 const val CFM_ALPHA_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cfalpha/files/Assets4"
 
 const val DATABASE_TABLE_NAME = "joy"
+
+object GlobalStatus {
+    var shizukuStatus = false
+}

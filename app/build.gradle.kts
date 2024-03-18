@@ -25,7 +25,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -37,6 +40,7 @@ android {
     }
     buildFeatures {
         compose = true
+        aidl = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -71,6 +75,9 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:serializer-jackson-android:1.4.7")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.blankj:utilcodex:1.31.1")
+    implementation("dev.rikka.shizuku:api:13.1.1")
+    implementation("dev.rikka.shizuku:provider:13.1.1")
+    implementation("dev.rikka.tools.refine:runtime:3.0.3")
     implementation(libs.androidx.paging.common.ktx)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -83,5 +90,4 @@ dependencies {
     androidTestImplementation(platform(libs.compose.bom))
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
-
 }

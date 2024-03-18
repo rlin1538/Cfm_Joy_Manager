@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -53,6 +54,8 @@ import kotlinx.coroutines.withContext
 fun NativePage(
     viewJoySticks: (String) -> Unit
 ) {
+    val TAG = "NativePage"
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -94,8 +97,9 @@ fun NativePage(
 
         LaunchedEffect(true) {
             val fetchedData = withContext(Dispatchers.IO) {
-                getJoyFiles(context)
+                return@withContext getJoyFiles(context)
             }
+            Log.d(TAG, "获取到的JoyFiles是：$fetchedData")
             fetchedData.forEach {
                 joys.add(it)
             }
@@ -119,6 +123,9 @@ fun NativePage(
                     .padding(paddingValues)
             ) {
                 items(joys) {
+                    val viewBtn = remember {
+                        mutableStateOf(true)
+                    }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -166,11 +173,25 @@ fun NativePage(
                                     }) {
                                     Text(text = "共享")
                                 }
-                                ElevatedButton(onClick = {
-                                    val json = readJoyFile(it, context).trim()
-                                    goViewJoySticks(json, viewJoySticks)
-                                }) {
-                                    Text(text = "查看")
+                                ElevatedButton(
+                                    onClick = {
+                                        viewBtn.value = false
+                                        scope.launch {
+                                            val json = readJoyFile(it, context).trim()
+                                            goViewJoySticks(json, viewJoySticks)
+                                            viewBtn.value = true
+                                        }
+                                    },
+                                    enabled = viewBtn.value
+                                ) {
+                                    if (viewBtn.value) {
+                                        Text(text = "查看")
+                                    } else {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(30.dp),
+                                            strokeWidth = 3.dp
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -239,6 +260,7 @@ fun NativePage(
                                     Log.d("NativePage", "替换失败")
                                     ToastUtils.showShort("替换失败")
                                 }
+
                                 1 -> {
                                     openChangeJoyDialog.value = false
                                     Log.d("NativePage", "替换成功")

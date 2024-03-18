@@ -36,8 +36,9 @@ import androidx.compose.ui.unit.dp
 import com.blankj.utilcode.util.ActivityUtils
 import com.blankj.utilcode.util.AppUtils
 import com.blankj.utilcode.util.ToastUtils
-import com.rlin.cfm_joy_manager.utils.CFM_DIR
+import com.rlin.cfm_joy_manager.utils.CFM_ALPHA_DIR
 import com.rlin.cfm_joy_manager.utils.DATABASE_TABLE_NAME
+import com.rlin.cfm_joy_manager.utils.GlobalStatus
 import com.rlin.cfm_joy_manager.utils.REQUEST_CODE_FOR_DIR
 import com.rlin.cfm_joy_manager.utils.SupabaseHelper
 import com.rlin.cfm_joy_manager.utils.startFor
@@ -49,6 +50,10 @@ fun HomePage(mActivity: ComponentActivity, requestPermission: () -> Unit) {
     val context = LocalContext.current
     val cloudJoyNumber = remember {
         mutableStateOf("Loading")
+    }
+
+    val joyDirs = remember {
+        mutableStateOf(GlobalStatus.CFM_DIR)
     }
     LaunchedEffect(key1 = true) {
         try {
@@ -152,7 +157,7 @@ fun HomePage(mActivity: ComponentActivity, requestPermission: () -> Unit) {
                             ) {
                                 Button(
                                     onClick = {
-                                        startFor(CFM_DIR, mActivity, REQUEST_CODE_FOR_DIR)
+                                        startFor(joyDirs.value, mActivity, REQUEST_CODE_FOR_DIR)
                                     }
                                 ) {
                                     Text("获取权限")
@@ -233,6 +238,46 @@ fun HomePage(mActivity: ComponentActivity, requestPermission: () -> Unit) {
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Text(text = "当前数据库已有${cloudJoyNumber.value}个共享键位")
+                        }
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(top = 16.dp)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { }
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(bottom = 8.dp),
+                                text = "切换到体验服键位",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(text = "初次切换后需要再次点击上方的获取权限，使用Shizuku则无需再次授权")
+                            Box(
+                                modifier = Modifier
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        if (AppUtils.isAppInstalled("com.tencent.tmgp.cfalpha")) {
+                                            joyDirs.value = CFM_ALPHA_DIR
+                                            GlobalStatus.CFM_DIR = CFM_ALPHA_DIR
+                                            ToastUtils.showShort("切换为体验服文件夹")
+                                        } else {
+                                            ToastUtils.showShort("此设备未安装cfm体验服")
+                                        }
+                                    }
+                                ) {
+                                    Text("切换到体验服")
+                                }
+                            }
                         }
                     }
                 }

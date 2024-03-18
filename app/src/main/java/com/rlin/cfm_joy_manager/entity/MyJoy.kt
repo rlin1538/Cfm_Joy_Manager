@@ -5,7 +5,6 @@ import android.util.Log
 import com.blankj.utilcode.util.FileIOUtils
 import com.blankj.utilcode.util.FileUtils
 import com.rlin.cfm_joy_manager.IMyJoy
-import com.rlin.cfm_joy_manager.utils.CFM_DIR
 import kotlin.system.exitProcess
 
 
@@ -21,9 +20,9 @@ class MyJoy : IMyJoy.Stub() {
         exitProcess(0)
     }
 
-    override fun getJoyFiles(): List<String> {
+    override fun getJoyFiles(fileName: String): List<String> {
         val res =
-            FileUtils.listFilesInDir(CFM_DIR)
+            FileUtils.listFilesInDir(fileName)
 
         return res.map {
             return@map it.name.substring(it.name.lastIndexOf('/') + 1)
@@ -45,7 +44,7 @@ class MyJoy : IMyJoy.Stub() {
     override fun readJoyFile(fileName: String): String {
         var res = ""
         try {
-            res =  FileIOUtils.readFile2String("$CFM_DIR/$fileName")
+            res =  FileIOUtils.readFile2String(fileName)
             Log.d(TAG, "读取结果: ${res.length}")
         } catch (e:Exception) {
             e.message?.let { Log.e(TAG, it) }
@@ -56,7 +55,7 @@ class MyJoy : IMyJoy.Stub() {
 
     override fun writeJoyFile(fileName: String, content: String): Int {
         return try {
-            if (FileIOUtils.writeFileFromString("$CFM_DIR/$fileName", content)) {
+            if (FileIOUtils.writeFileFromString(fileName, content)) {
                 1
             } else {
                 -1

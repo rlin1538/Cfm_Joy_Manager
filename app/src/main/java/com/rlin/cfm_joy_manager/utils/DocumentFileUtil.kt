@@ -58,6 +58,7 @@ fun changeToUri(path: String): String {
 
 //转换至uriTree的路径
 fun changeToUri3(path: String): String {
+    println("改变的path为：$path")
     var path = path
     path = path.replace("/storage/emulated/0/", "").replace("/", "%2F")
     return "content://com.android.externalstorage.documents/tree/primary%3A$path"
@@ -79,7 +80,7 @@ suspend fun getJoyFiles(context: Context): List<String> {
     if (!GlobalStatus.shizukuStatus || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
         val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
             context, Uri.parse(
-                changeToUri3(CFM_DIR)
+                changeToUri3(GlobalStatus.CFM_DIR)
             )
         )
         if (documentFile != null) {
@@ -104,7 +105,7 @@ suspend fun getJoyFiles(context: Context): List<String> {
         }
     } else {
         doSzkWork(context) { service ->
-            list = IMyJoy.Stub.asInterface(service).joyFiles
+            list = IMyJoy.Stub.asInterface(service).getJoyFiles(GlobalStatus.CFM_DIR)
             Log.d(TAG, "SzkWork获得的list是：$list")
         }
         return list
@@ -119,7 +120,7 @@ suspend fun readJoyFile(fileName: String, context: Context): String {
     if (!GlobalStatus.shizukuStatus || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
         val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
             context, Uri.parse(
-                changeToUri3(CFM_DIR)
+                changeToUri3(GlobalStatus.CFM_DIR)
             )
         )
         var joyFile: DocumentFile? = null
@@ -143,7 +144,7 @@ suspend fun readJoyFile(fileName: String, context: Context): String {
         }
     } else {
         doSzkWork(context) { service ->
-            fileContent = IMyJoy.Stub.asInterface(service).readJoyFile(fileName)
+            fileContent = IMyJoy.Stub.asInterface(service).readJoyFile("${GlobalStatus.CFM_DIR}/$fileName")
             Log.d(TAG, "SzkWork获得的键位数据长度：${fileContent.length}")
         }
     }
@@ -194,7 +195,7 @@ suspend fun changeDocumentFile(fileName: String, content: String, context: Conte
     if (!GlobalStatus.shizukuStatus || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
         val documentFile: DocumentFile? = DocumentFile.fromTreeUri(
             context, Uri.parse(
-                changeToUri3(CFM_DIR)
+                changeToUri3(GlobalStatus.CFM_DIR)
             )
         )
         var joyFile: DocumentFile? = null
@@ -232,7 +233,7 @@ suspend fun changeDocumentFile(fileName: String, content: String, context: Conte
     } else {
         var result = -1
         doSzkWork(context) { service ->
-            result = IMyJoy.Stub.asInterface(service).writeJoyFile(fileName, content)
+            result = IMyJoy.Stub.asInterface(service).writeJoyFile("${GlobalStatus.CFM_DIR}/$fileName", content)
             Log.d(TAG, "SzkWork写文件的结果为$result")
         }
         return result

@@ -849,11 +849,12 @@ val standardJoySticksJson = """
 """.trimIndent()
 
 const val REQUEST_CODE_FOR_DIR = 10001
-const val CFM_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/Assets4"
+const val CFM_OFFICIAL_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cf/files/Assets4"
 const val CFM_ALPHA_DIR = "/storage/emulated/0/Android/data/com.tencent.tmgp.cfalpha/files/Assets4"
 
 const val DATABASE_TABLE_NAME = "joy"
 
 object GlobalStatus {
     var shizukuStatus = false
+    var CFM_DIR = CFM_OFFICIAL_DIR
 }

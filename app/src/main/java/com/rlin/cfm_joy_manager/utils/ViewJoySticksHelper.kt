@@ -1,5 +1,7 @@
 package com.rlin.cfm_joy_manager.utils
 
+import com.blankj.utilcode.util.ToastUtils
+
 class ViewJoySticksHelper {
 }
 
@@ -14,6 +16,8 @@ fun goViewJoySticks(
     }
     if (json.isNotEmpty() && curlyIndex != 0) {
         viewJoySticks(json)
+    } else {
+        ToastUtils.showShort("键位内容出错")
     }
 }
 

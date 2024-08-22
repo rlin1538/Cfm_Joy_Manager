@@ -211,7 +211,11 @@ fun NativePage(
                         joyCode.value = result.toString()
                         when (result) {
                             -1 -> {
-                                ToastUtils.showShort("上传失败")
+                                ToastUtils.showShort("上传失败，请检查网络")
+                            }
+
+                            -2 -> {
+                                ToastUtils.showShort("上传失败，键位读取错误，请重试")
                             }
 
                             else -> {

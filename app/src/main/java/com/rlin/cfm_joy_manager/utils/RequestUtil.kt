@@ -13,6 +13,7 @@ import java.util.Random
 
 suspend fun uploadJoy(name: String, describe: String, content: String): Int {
     try {
+        if (content.isEmpty()) return -2
         val random = Random()
         val number = random.nextInt(1000000)
         val res = SupabaseHelper.client.postgrest[DATABASE_TABLE_NAME].insert(

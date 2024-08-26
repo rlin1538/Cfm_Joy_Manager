@@ -25,7 +25,7 @@ fun SuccessUploadDialog(
             Text(text = dialogTitle, style = MaterialTheme.typography.headlineLarge)
         },
         text = {
-            Text(text = "已自动复制到剪贴板，请牢记你的键位码")
+            Text(text = "可复制到剪贴板，请牢记你的键位码")
         },
         onDismissRequest = {
             onDismissRequest()
@@ -36,7 +36,7 @@ fun SuccessUploadDialog(
                     onConfirmation()
                 }
             ) {
-                Text("再次复制")
+                Text("复制")
             }
         },
         dismissButton = {

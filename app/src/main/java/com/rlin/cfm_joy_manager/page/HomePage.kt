@@ -82,7 +82,7 @@ fun HomePage(mActivity: ComponentActivity, requestPermission: () -> Unit) {
                 }
             ) {
                 Icon(imageVector = Icons.Outlined.MonetizationOn, contentDescription = "Donate")
-                Text(modifier = Modifier.padding(horizontal = 8.dp), text = "捐赠寒心")
+                Text(modifier = Modifier.padding(horizontal = 8.dp), text = "赞助寒心")
             }
         }
     ) { padding ->

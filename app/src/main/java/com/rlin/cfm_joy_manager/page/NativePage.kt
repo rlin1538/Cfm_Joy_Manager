@@ -4,12 +4,17 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,23 +23,33 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.blankj.utilcode.util.ToastUtils
 import com.rlin.cfm_joy_manager.entity.RESPONSE_FAILED
 import com.rlin.cfm_joy_manager.entity.RESPONSE_SUCCESS
+import com.rlin.cfm_joy_manager.entity.getJoyFileName
 import com.rlin.cfm_joy_manager.utils.changeDocumentFile
 import com.rlin.cfm_joy_manager.utils.fromCodeGetJoy
 import com.rlin.cfm_joy_manager.utils.getJoyFiles
@@ -45,6 +60,9 @@ import com.rlin.cfm_joy_manager.widget.ChangeJoyDialog
 import com.rlin.cfm_joy_manager.widget.SuccessChangeDialog
 import com.rlin.cfm_joy_manager.widget.SuccessUploadDialog
 import com.rlin.cfm_joy_manager.widget.UploadDialog
+import dev.souravdas.materialsegmentedbutton.SegmentedButton
+import dev.souravdas.materialsegmentedbutton.SegmentedButtonDefaults
+import dev.souravdas.materialsegmentedbutton.SegmentedButtonItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +89,16 @@ fun NativePage(
         val scope = rememberCoroutineScope()
         val clipboardManager = LocalClipboardManager.current
 
+        val loading = remember {
+            mutableStateOf(true)
+        }
         val joys =
+            remember {
+                mutableStateListOf<String>()
+            }
+        val users =
+            remember { mutableListOf<String>() }
+        val filterUsers =
             remember {
                 mutableStateListOf<String>()
             }
@@ -95,6 +122,8 @@ fun NativePage(
             mutableStateOf("")
         }
 
+        var searchText by rememberSaveable { mutableStateOf("") }
+
         LaunchedEffect(true) {
             val fetchedData = withContext(Dispatchers.IO) {
                 return@withContext getJoyFiles(context)
@@ -102,11 +131,22 @@ fun NativePage(
             Log.d(TAG, "获取到的JoyFiles是：$fetchedData")
             fetchedData.forEach {
                 joys.add(it)
+                val result = it.split("_")
+                var userId = ""
+                if (result.size == 3) {
+                    userId = result[2].split(".")[0]
+                } else {
+                    if (result[1].length > 6) {
+                        userId = result[1].split(".")[0]
+                    }
+                }
+                if (!users.contains(userId)) users.add(userId)
             }
+            filterUsers.addAll(users)
+            loading.value = false
         }
 
-        if (joys.isEmpty()) {
-
+        if (loading.value) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -117,83 +157,157 @@ fun NativePage(
                 }
             }
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                items(joys) {
-                    val viewBtn = remember {
-                        mutableStateOf(true)
-                    }
-                    Card(
+                SearchBar(
+                    modifier = Modifier
+                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                        .align(Alignment.CenterHorizontally),
+                    query = searchText,
+                    onQueryChange = {
+                        searchText = it
+                        filterUsers.clear()
+                        filterUsers.addAll(users.filter { user ->
+                            user.contains(searchText)
+                        })
+                        println(filterUsers.toList())
+                    },
+                    onSearch = {},
+                    active = false,
+                    onActiveChange = {},
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    placeholder = {
+                        Text(text = "输入用户ID")
+                    },
+                    shape = SearchBarDefaults.dockedShape,
+                    windowInsets = WindowInsets(top = 0.dp)
+                ) {
+
+                }
+                if (filterUsers.isNotEmpty()) {
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 12.dp, end = 12.dp, top = 12.dp)
+                            .fillMaxSize()
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            val result = it.split("_")
-                            var userId = "无"
-                            var joyNum = 1
-                            if (result.size == 3) {
-                                joyNum = result[1].toInt()
-                                userId = result[2].split(".")[0]
-                            } else {
-                                if (result[1].length > 6) {
-                                    userId = result[1].split(".")[0]
-                                }
+                        items(filterUsers) {
+                            val viewBtn = remember {
+                                mutableStateOf(true)
                             }
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "用户ID：$userId 的键位$joyNum",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
+                            val selectJoyNum = remember {
+                                mutableIntStateOf(0)
                             }
-                            Text(text = it)
-                            Row(
-                                modifier = Modifier.align(Alignment.End)
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                             ) {
-                                OutlinedButton(
-                                    modifier = Modifier.padding(horizontal = 8.dp),
-                                    onClick = {
-                                        selectedJoy.value = it
-                                        openChangeJoyDialog.value = true
-                                    }) {
-                                    Text(text = "修改")
-                                }
-                                Button(
-                                    modifier = Modifier.padding(horizontal = 8.dp),
-                                    onClick = {
-                                        selectedJoy.value = it
-                                        openUploadDialog.value = true
-                                    }) {
-                                    Text(text = "共享")
-                                }
-                                ElevatedButton(
-                                    onClick = {
-                                        viewBtn.value = false
-                                        scope.launch {
-                                            val json = readJoyFile(it, context).trim()
-                                            goViewJoySticks(json, viewJoySticks)
-                                            viewBtn.value = true
-                                        }
-                                    },
-                                    enabled = viewBtn.value
+                                Column(
+                                    modifier = Modifier.padding(12.dp)
                                 ) {
-                                    if (viewBtn.value) {
-                                        Text(text = "查看")
-                                    } else {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(30.dp),
-                                            strokeWidth = 3.dp
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "用户ID：$it ",
+                                            style = MaterialTheme.typography.titleLarge
                                         )
+                                    }
+                                    //Text(text = it)
+                                    SegmentedButton(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        items = listOf(
+                                            SegmentedButtonItem(
+                                                title = { Text(text = "键位一") },
+                                                onClick = {
+                                                    selectJoyNum.intValue = 0
+                                                }
+                                            ),
+                                            SegmentedButtonItem(
+                                                title = { Text(text = "键位二") },
+                                                onClick = {
+                                                    selectJoyNum.intValue = 1
+                                                }
+                                            ),
+                                            SegmentedButtonItem(
+                                                title = { Text(text = "键位三") },
+                                                onClick = {
+                                                    selectJoyNum.intValue = 2
+                                                }
+                                            ),
+                                        ),
+                                        cornerRadius = SegmentedButtonDefaults.segmentedButtonCorners(
+                                            60
+                                        ) //or you can individually mention each corners here
+                                    )
+                                    Row(
+                                        modifier = Modifier.align(Alignment.End)
+                                    ) {
+
+                                        OutlinedButton(
+                                            modifier = Modifier.padding(horizontal = 8.dp),
+                                            onClick = {
+                                                selectedJoy.value =
+                                                    getJoyFileName(it, selectJoyNum.intValue)
+                                                openChangeJoyDialog.value = true
+                                            }) {
+                                            Text(text = "修改")
+                                        }
+                                        Button(
+                                            modifier = Modifier.padding(horizontal = 8.dp),
+                                            onClick = {
+                                                selectedJoy.value =
+                                                    getJoyFileName(it, selectJoyNum.intValue)
+                                                openUploadDialog.value = true
+                                            }) {
+                                            Text(text = "共享")
+                                        }
+                                        ElevatedButton(
+                                            onClick = {
+                                                viewBtn.value = false
+                                                scope.launch {
+                                                    val json = readJoyFile(
+                                                        getJoyFileName(
+                                                            it,
+                                                            selectJoyNum.intValue
+                                                        ), context
+                                                    ).trim()
+                                                    goViewJoySticks(json, viewJoySticks)
+                                                    viewBtn.value = true
+                                                }
+                                            },
+                                            enabled = viewBtn.value
+                                        ) {
+                                            if (viewBtn.value) {
+                                                Text(text = "查看")
+                                            } else {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(30.dp),
+                                                    strokeWidth = 3.dp
+                                                )
+                                            }
+                                        }
+
                                     }
                                 }
                             }
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) {
+                        Column(modifier = Modifier.align(Alignment.Center)) {
+                            Text(text = "键位为空")
                         }
                     }
                 }
@@ -221,6 +335,7 @@ fun NativePage(
                             else -> {
                                 openUploadDialog.value = false
                                 ToastUtils.showShort("上传成功")
+                                clipboardManager.setText(AnnotatedString(joyCode.value))
                                 openSuccessUploadDialog.value = true
                             }
                         }

@@ -315,11 +315,12 @@ fun NativePage(
         }
         if (openUploadDialog.value) {
             UploadDialog(
-                onConfirmation = { name, describe, afterUpload ->
+                onConfirmation = { name, describe, id, afterUpload ->
                     scope.launch {
                         val result = uploadJoy(
                             name = name,
                             describe = describe,
+                            customId = id,
                             content = readJoyFile(selectedJoy.value, context).trim()
                         )
                         joyCode.value = result.toString()
@@ -327,9 +328,11 @@ fun NativePage(
                             -1 -> {
                                 ToastUtils.showShort("上传失败，请检查网络")
                             }
-
                             -2 -> {
                                 ToastUtils.showShort("上传失败，键位读取错误，请重试")
+                            }
+                            -3 -> {
+                                ToastUtils.showShort("键位码重复，请重试")
                             }
 
                             else -> {

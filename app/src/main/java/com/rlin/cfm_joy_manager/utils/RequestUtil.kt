@@ -11,11 +11,11 @@ import java.util.Date
 import java.util.Random
 
 
-suspend fun uploadJoy(name: String, describe: String, content: String): Int {
+suspend fun uploadJoy(name: String, describe: String, content: String, customId: Int = -1): Int {
     try {
         if (content.isEmpty()) return -2
         val random = Random()
-        val number = random.nextInt(1000000)
+        val number = if (customId==-1) random.nextInt(1000000) else customId
         val res = SupabaseHelper.client.postgrest[DATABASE_TABLE_NAME].insert(
             value = JoyData(
                 id = number,
@@ -32,7 +32,9 @@ suspend fun uploadJoy(name: String, describe: String, content: String): Int {
         return res.id
     } catch (e: Exception) {
         Log.d("RequestUtil", "uploadJoy 时出错：${e.message}")
-
+        if (e.message?.contains("duplicate key value") == true) {
+            return -3
+        }
         return -1
     }
 }
